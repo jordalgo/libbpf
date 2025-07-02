@@ -10362,6 +10362,9 @@ static int map_btf_datasec_resize(struct bpf_map *map, __u32 size)
 		return -EINVAL;
 	}
 
+	/* save var->type before btf modification invalidates pointers */
+	__u32 var_type_id = var->type;
+
 	/* create a new array based on the existing array, but with new length */
 	nr_elements = (size - var->offset) / element_sz;
 	new_array_id = btf__add_array(btf, array->index_type, array->type, nr_elements);
@@ -10373,7 +10376,7 @@ static int map_btf_datasec_resize(struct bpf_map *map, __u32 size)
 	 */
 	datasec_type = btf_type_by_id(btf, map->btf_value_type_id);
 	var = &btf_var_secinfos(datasec_type)[vlen - 1];
-	var_type = btf_type_by_id(btf, var->type);
+	var_type = btf_type_by_id(btf, var_type_id);
 
 	/* finally update btf info */
 	datasec_type->size = size;
